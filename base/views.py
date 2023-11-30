@@ -1,4 +1,10 @@
 from django.shortcuts import render, redirect
+from django.http import HttpResponse
+from django.contrib import messages
+from django.contrib.auth.decorators import login_required
+from django.db.models import Q
+from django.contrib.auth.models import User
+from django.contrib.auth import authenticate, login, logout
 from .models import Room, Topic
 from .forms import RoomForm
 
@@ -10,13 +16,54 @@ from .forms import RoomForm
 #     {'id': 3, 'name': 'Frontend Developers'},
 # ]
 
+def loginPage(request):
+    page = 'login'
+
+    if request.user.is_authenticated:
+        return redirect('home')
+
+    if request.method == 'POST':
+        username = request.POST.get('username')
+        password = request.POST.get('password')
+
+        try:
+            user = User.objects.get(username=username)
+        except:
+            messages.error(request, "User does not exist")
+
+        user = authenticate(request, username=username, password=password)
+
+        if user is not None:
+            login(request, user)
+            return redirect('home')
+        else:
+            messages.error(request, 'Username OR password does not exist')
+
+    context = {'page': page}
+    return render(request, 'base/login_register.html', context)
+
+def logoutUser(request):
+    logout(request)
+    return redirect('home')
+
+def registerPage(request):
+    page = 'register'
+
+    return render(request, 'base/login_register.html')
+
 def home(request):
-    q = request.GET.get('q')
-    rooms = Room.objects.filter(topic__name=q)
+    q = request.GET.get('q') if request.GET.get('q') != None else ''
+
+    rooms = Room.objects.filter(
+        Q(topic__name__icontains=q) |
+        Q(name__icontains=q) |
+        Q(description__icontains=q)
+    )
 
     topics = Topic.objects.all()
+    room_count = rooms.count()
 
-    context = {'rooms': rooms, 'topics': topics}
+    context = {'rooms': rooms, 'topics': topics, 'room_count': room_count}
     return render(request, 'base/home.html', context)
 
 def room(request, pk):
@@ -25,21 +72,28 @@ def room(request, pk):
 
     return render(request, 'base/room.html', context)
 
+@login_required(login_url='login')
 def createRoom(request):
     form = RoomForm()
 
-    if request.method == 'POST':
+    # this process handles form validation
+
+    if request.method == 'POST': # 'POST' is used when submitting data, such as form data, to the server
         form = RoomForm(request.POST)
-        if form.is_valid():
-            form.save()
+        if form.is_valid(): # This condition checks if the form data is valid according to the rules specified in the RoomForm class.
+            form.save() # If the form is valid, this line saves the form data to the database
             return redirect('home')
 
     context = {'form': form}
     return render(request, 'base/room_form.html', context)
 
+@login_required(login_url='login')
 def updateRoom(request, pk):
     room = Room.objects.get(id=pk)
     form = RoomForm(instance=room)
+
+    if request.user != room.host:
+        return HttpResponse('You are not allowed here!!')
 
     if request.method == 'POST':
         form = RoomForm(request.POST, instance=room)
@@ -50,8 +104,13 @@ def updateRoom(request, pk):
     context = {'form': form}
     return render(request, 'base/room_form.html', context)
 
+@login_required(login_url='login')
 def deleteRoom(request, pk):
     room = Room.objects.get(id=pk)
+
+    if request.user != room.host:
+        return HttpResponse('You are not allowed here!!')
+    
     if request.method == 'POST':
         room.delete()
         return redirect('home')
