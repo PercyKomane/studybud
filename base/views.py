@@ -5,7 +5,8 @@ from django.contrib.auth.decorators import login_required
 from django.db.models import Q
 from django.contrib.auth.models import User
 from django.contrib.auth import authenticate, login, logout
-from .models import Room, Topic
+from django.contrib.auth.forms import UserCreationForm
+from .models import Room, Topic, Message
 from .forms import RoomForm
 
 # Create your views here.
@@ -23,7 +24,7 @@ def loginPage(request):
         return redirect('home')
 
     if request.method == 'POST':
-        username = request.POST.get('username')
+        username = request.POST.get('username').lower()
         password = request.POST.get('password')
 
         try:
@@ -48,8 +49,21 @@ def logoutUser(request):
 
 def registerPage(request):
     page = 'register'
+    form = UserCreationForm()
 
-    return render(request, 'base/login_register.html')
+    if request.method == 'POST':
+        form = UserCreationForm(request.POST)
+        if form.is_valid():
+            user = form.save(commit=False)
+            user.username = user.username.lower()
+            user.save()
+            login(request, user)
+            return redirect('home')
+        else:
+            messages.error(request, 'An error occured during registration ')
+
+
+    return render(request, 'base/login_register.html', {'form': form})
 
 def home(request):
     q = request.GET.get('q') if request.GET.get('q') != None else ''
@@ -68,7 +82,18 @@ def home(request):
 
 def room(request, pk):
     room = Room.objects.get(id=pk)
-    context = {'room': room}
+    room_messages = room.message_set.all().order_by('-created')
+
+    if request.method == 'POST':
+        message = Message.objects.create(
+            user = request.user,
+            room =room,
+            body = request.POST.get('body')
+        )
+        return redirect('room', pk=room.id)
+        
+
+    context = {'room': room, 'room_messages': room_messages}
 
     return render(request, 'base/room.html', context)
 
