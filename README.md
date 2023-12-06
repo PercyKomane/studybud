@@ -1,2 +1,2 @@
 # studybud
- full-stack
+Chat room full-stack application 
