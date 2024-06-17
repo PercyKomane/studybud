@@ -11,6 +11,10 @@ urlpatterns = [
     path('update-room/<str:pk>/', views.updateRoom, name="update-room"),
     path('delete-room/<str:pk>/', views.deleteRoom, name="delete-room"),
     path('delete-message/<str:pk>/', views.deleteMessage, name="delete-message"),
+    
+    # Api
     path('roomApi/', views.RoomApi.as_view()),
+    path('topicApi/', views.TopicApi.as_view()),
+    path('messageApi/', views.MessageApi.as_view()),
 ]
 
