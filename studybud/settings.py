@@ -81,8 +81,12 @@ WSGI_APPLICATION = 'studybud.wsgi.application'
 
 DATABASES = {
     'default': {
-        'ENGINE': 'django.db.backends.sqlite3',
-        'NAME': BASE_DIR / 'db.sqlite3',
+        'ENGINE': 'django.db.backends.mysql',
+        'NAME': config('studybud_db'),
+        'USER': config('Percy'),
+        'PASSWORD': config('12345678'),
+        'HOST': config('DB_HOST', 'db'),  # Use 'db' as default from .env
+        'PORT': config('DB_PORT', '3306'),  # Use '3306' as default from .env
     }
 }
 
