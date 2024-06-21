@@ -16,18 +16,16 @@ from decouple import config
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
 
-
 # Quick-start development settings - unsuitable for production
 # See https://docs.djangoproject.com/en/4.2/howto/deployment/checklist/
 
 # SECURITY WARNING: keep the secret key used in production secret!
-SECRET_KEY = 'django-insecure-7g=ksezw9#v#za@lcg=db@)#b5gw(ryp!zoii2j2ka-o0o+$g%'
+SECRET_KEY = config('SECRET_KEY', default='django-insecure-7g=ksezw9#v#za@lcg=db@)#b5gw(ryp!zoii2j2ka-o0o+$g%')
 
 # SECURITY WARNING: don't run with debug turned on in production!
-DEBUG = True
+DEBUG = config('DEBUG', default=True, cast=bool)
 
-ALLOWED_HOSTS = []
-
+ALLOWED_HOSTS = config('ALLOWED_HOSTS', default=[], cast=Csv())
 
 # Application definition
 
@@ -86,8 +84,8 @@ DATABASES = {
         'NAME': config('MYSQL_DATABASE'),
         'USER': config('MYSQL_USER'),
         'PASSWORD': config('MYSQL_PASSWORD'),
-        'HOST': config('DB_HOST', 'db'),  # Use 'db' as default from .env
-        'PORT': config('DB_PORT', '3306'),  # Use '3306' as default from .env
+        'HOST': config('DB_HOST', default='db'),  # Use 'db' as default from .env
+        'PORT': config('DB_PORT', default='3306'),  # Use '3306' as default from .env
     }
 }
 
