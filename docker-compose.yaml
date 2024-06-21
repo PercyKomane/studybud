@@ -1,8 +1,8 @@
 version: '3'
 services:
   db:
-    image: mysql:5.7
-    container_name: project_name_mariadb
+    image: mysql:8.0
+    container_name: studybud_db
     restart: always
     volumes:
       - data:/var/lib/mysql
